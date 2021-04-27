@@ -68,13 +68,13 @@ usage() {
 		Usage                            `basename $0` [ -h ] [ -p [ -b backend ] [ -a | -l ] ] [ -s style ] [ -o output ]
 
 		Options:
-		  -h                             Show this help message
-		  -p                             Use pywal to set wallpaper
-		    -b                           Pass a backend to pywal (optional)
-		    -l                           Force light color scheme
-		    -a                           Automatically set light/dark color scheme based on GNOME theme or daytime
-		  -s                             Name of the style to apply
-      -o                             Output wallpaper to file instead of setting it
+		  -s                             Name of the style to apply (required)
+		  -h                             Show this help message 
+		  -p                             Use pywal to set wallpaper 
+		    -b                           Pass a backend to pywal 
+		    -l                           Force light color scheme 
+		    -a                           Automatically set light/dark color scheme based on GNOME theme or daytime 
+		  -o                             Output wallpaper to file instead of setting it 
 	EOF
 
 	styles=(`ls $DIR`)
@@ -115,8 +115,8 @@ set_cinnamon() {
 
 ## Set wallpaper in GNOME
 set_gnome() {
-	gsettings set org.gnome.desktop.background picture-uri "file:///$1"
-	gsettings set org.gnome.desktop.screensaver picture-uri "file:///$1"
+	gsettings set org.gnome.desktop.background picture-uri "file://$1"
+	gsettings set org.gnome.desktop.screensaver picture-uri "file://$1"
 }
 ## For XFCE only
 if [[ "$OSTYPE" == "linux"* ]]; then
@@ -141,7 +141,10 @@ case "$OSTYPE" in
 				SETTER=set_kde
 			elif [[ "$DESKTOP_SESSION" =~ ^(PANTHEON|Pantheon|pantheon|GNOME|Gnome|gnome|Gnome-xorg|gnome-xorg|UBUNTU|Ubuntu|ubuntu|DEEPIN|Deepin|deepin|POP|Pop|pop)$ ]]; then
 				SETTER=set_gnome
-			else 
+			elif [[ "$DESKTOP_SESSION" == "sway" ]]; then
+				SETTER="swaybg -i"
+			else
+				echo "${CYAN}INFO${WHITE}: Reverting to feh. This might not work depending on your setup."
 				SETTER="feh --bg-fill"
 			fi
 			;;
