@@ -65,7 +65,7 @@ usage() {
 		A bash script to adapt your wallpaper to the time
 		By Aditya Shakya (@adi1090x) and GitGangGuy
 		
-		Usage                            `basename $0` [ -h ] [ -p [ -b backend ] [ -a | -l ] ] [ -s style ]
+		Usage                            `basename $0` [ -h ] [ -p [ -b backend ] [ -a | -l ] ] [ -s style ] [ -o output ]
 
 		Options:
 		  -h                             Show this help message
@@ -74,6 +74,7 @@ usage() {
 		    -l                           Force light color scheme
 		    -a                           Automatically set light/dark color scheme based on GNOME theme or daytime
 		  -s                             Name of the style to apply
+      -o                             Output wallpaper to file instead of setting it
 	EOF
 
 	styles=(`ls $DIR`)
@@ -83,8 +84,9 @@ usage() {
 
     cat <<- EOF
 		Examples:
-		`basename $0` -s beach                   Set wallpaper from 'beach' style
-		`basename $0` -p -s sahara               Set wallpaper from 'sahara' style using pywal
+		`basename $0` -s beach                   Set 'beach' style wallpaper
+		`basename $0` -s beach -o ~/.wallpaper   Save 'beach' style wallpaper into file '~/.wallpaper'
+		`basename $0` -p -s sahara               Set 'beach' style wallpaper, and refresh the pywal theme
 		`basename $0` -p -b colorz -s sahara     " with 'colorz' backend
 		`basename $0` -p -b colorz -s sahara -a    " with automatic light/dark mode
 		`basename $0` -p -b colorz -s sahara -l    " with forced light mode
@@ -196,6 +198,23 @@ pywal_set() {
 	fi
 }
 
+## Put wallpaper in $OUTPUT
+file_set() {
+	get_img "$1"
+	if [[ -n $(echo "$OUTPUT" | grep -o "^[/~]") ]]
+	then
+		DIR=$(dirname $OUTPUT)
+		if [[ -d $DIR ]]
+		then
+			cp "$image.$FORMAT" "$OUTPUT"
+		else
+			echo "[!] Directory $DIR does not exist, exiting..."
+		fi
+	else
+		echo "[!] Output must be an absolute path, $OUTPUT isn't, exiting..."
+	fi
+}
+
 ## Wallpaper Setter
 set_wallpaper() {
 	cfile="$HOME/.cache/dwall_current"
@@ -242,6 +261,8 @@ main() {
 	if [[ -n "$PYWAL" ]]; then
 		_walbackend=${WALBACKEND:-wal}
 		{ pywal_set "$num" "$_walbackend"; reset_color; exit 0; }
+	elif [[ -n "$OUTPUT" ]]; then
+		{ file_set "$num"; reset_color; exit 0; }
 	else
 		{ set_wallpaper "$num"; reset_color; exit 0; }
 	fi
@@ -249,11 +270,14 @@ main() {
 
 WALSCHEME='dark'
 ## Get Options
-while getopts ":s:plahb:" opt; do
+while getopts ":hplas:b:o:" opt; do
 	case ${opt} in
 		p)
 			PYWAL=true
 			;;
+		o)
+			OUTPUT=$OPTARG
+      ;;
 		b)
 			WALBACKEND=$OPTARG
 			;;
