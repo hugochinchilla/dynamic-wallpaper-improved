@@ -19,10 +19,9 @@ Sponsor the original creator, adi1090x:
 + Easy manual addition of custom wallpapers
 + Extensive [Pywal](https://github.com/dylanaraps/pywal) support to adjust your program themes as well
 + Uses [cronjobs](https://github.com/cronie-crond/cronie/) to reliably refresh the wallpaper (e.g. every hour)
-+ Tested on many setups:
-  - **`Window Managers`** : `Openbox`, `i3wm`, `bspwm`, `awesomewm`, `Fluxbox`, `Fvwm`, `Swaywm`
-  - **`Desktop Environments`** : `KDE`, `Pantheon`, `Gnome`, `Deepin`, `Cinnamon`, `XFCE`, `LXDE`, `MATE`
-+ Extended support for GNOME theming 
++ Tested on many setups (see the original repository for a list)
++ Extended support for GNOME theming
++ Many [improvements](#improvements) (see below!)
 
 ### System Requirements
 
@@ -36,6 +35,17 @@ Make sure your system fulfills the following requirements before using DWI:
 
 ### Improvements
 
+  * General
+    * Extended help message
+    * Added script `reinstall.sh` to reinstall the `dwall.sh` script only, e.g. after an update (update via `git pull --all --rebase` or equivalent)  
+    Note: If you want to also receive new wallpapers from an update, you have to run `install.sh` and log in again (depending on your environment). You might be stuck with a black wallpaper until you reload your environment. If you want to avoid logging out, you can also first run `uninstall.sh` before installing everything again.
+    * Removed seemingly unnecessary `test.sh` file
+  * Options
+    * Added option to copy the wallpaper to a file instead of setting it directly (Thanks [Kagia001](https://github.com/Kagia001)! :100:)
+  * Environments
+    * Added `sway` WM support (suggested by [ramazanemreosmanoglu](https://github.com/ramazanemreosmanoglu) :+1:)
+  * Wallpapers
+    * Added macOS Big Sur adaptive wallpaper (Thanks [egemertdogan](https://github.com/egemertdogan)! :tada:)
   * Pywal
     * Added the option to pass in a different pywal backend using `-b [BACKEND]`
     * Added the option to create a light or dark theme based on
