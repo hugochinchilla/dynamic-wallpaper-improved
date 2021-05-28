@@ -20,6 +20,11 @@ HOUR=`date +%k`
 
 ## Wordsplit in ZSH
 set -o shwordsplit 2>/dev/null
+## Case-independent regex matching
+shopt -s nocasematch
+
+# Turn debug mode off by default
+DEBUG=false
 
 ## Reset terminal colors
 reset_color() {
@@ -74,7 +79,8 @@ usage() {
 		    -b                           Pass a backend to pywal 
 		    -l                           Force light color scheme 
 		    -a                           Automatically set light/dark color scheme based on GNOME theme or daytime 
-		  -o                             Output wallpaper to file instead of setting it 
+		  -o                             Output wallpaper to file instead of setting it
+		  -d                             Turn on debug messages
 	EOF
 
 	styles=(`ls $DIR`)
@@ -118,6 +124,36 @@ set_gnome() {
 	gsettings set org.gnome.desktop.background picture-uri "file://$1"
 	gsettings set org.gnome.desktop.screensaver picture-uri "file://$1"
 }
+
+## Set wallpaper in Pantheon
+set_pantheon() {
+	if $DEBUG; then
+		echo "${CYAN}DEBUG${WHITE}: Pantheon detected. This might not work (See issue #5). Printing debug commands:"
+		echo "${ORANGE}$ gsettings list-schemas | grep -iF 'background'${WHITE}"
+		gsettings list-schemas | grep -iF 'background'
+		echo "${ORANGE}$ gsettings list-schemas | grep -iF 'wallpaper'${WHITE}"
+		gsettings list-schemas | grep -iF 'wallpaper'
+		echo "${ORANGE}$ gsettings list-schemas | grep -iF 'screensaver'${WHITE}"
+		gsettings list-schemas | grep -iF 'screensaver'
+		echo "${ORANGE}$ gsettings list-schemas | grep -iF 'org.gnome.desktop'${WHITE}"
+		gsettings list-schemas | grep -iF 'org.gnome.desktop'
+		echo "${ORANGE}$ gsettings list-recursively org.gnome.desktop.background${WHITE}"
+		gsettings list-recursively org.gnome.desktop.background
+		echo "${ORANGE}$ file /etc/systemd/system/display-manager.service${WHITE}"
+		file /etc/systemd/system/display-manager.service
+		echo "${ORANGE}DEBUG${WHITE}: Received '$1' as wallpaper location"
+		echo "${ORANGE}DEBUG${WHITE}: Setting wallpaper using gsettings"
+	fi
+	gsettings set org.gnome.desktop.background picture-uri "file://$1"
+	gsettings set org.gnome.desktop.screensaver picture-uri "file://$1"
+	if $DEBUG; then
+		echo "${ORANGE}DEBUG${WHITE}: Sleeping for 10 seconds. Has your wallpaper changed?"
+		sleep 10
+		echo "${ORANGE}DEBUG${WHITE}: Setting wallpaper using feh. If this works, please report it!"
+		feh --bg-fill "$1"
+	fi
+}
+
 ## For XFCE only
 if [[ "$OSTYPE" == "linux"* ]]; then
 	SCREEN="$(xrandr --listactivemonitors | awk -F ' ' 'END {print $1}' | tr -d \:)"
@@ -129,22 +165,24 @@ case "$OSTYPE" in
 	linux*)
 			if [ -n "$SWAYSOCK" ]; then
 				SETTER="eval ogurictl output '*' --image"
-			elif [[ "$DESKTOP_SESSION" =~ ^(MATE|Mate|mate)$ ]]; then
+			elif [[ "$DESKTOP_SESSION" =~ mate ]]; then
 				SETTER="gsettings set org.mate.background picture-filename"
-			elif [[ "$DESKTOP_SESSION" =~ ^(Xfce Session|xfce session|XFCE|xfce|Xubuntu|xubuntu)$ ]]; then
+			elif [[ "$DESKTOP_SESSION" =~ XFCE|Xubuntu ]]; then
 				SETTER="xfconf-query --channel xfce4-desktop --property /backdrop/screen$SCREEN/monitor$MONITOR/workspace0/last-image --set"
-			elif [[ "$DESKTOP_SESSION" =~ ^(LXDE|Lxde|lxde)$ ]]; then
+			elif [[ "$DESKTOP_SESSION" =~ LXDE ]]; then
 				SETTER="pcmanfm --set-wallpaper"
-			elif [[ "$DESKTOP_SESSION" =~ ^(cinnamon|Cinnamon)$ ]]; then
+			elif [[ "$DESKTOP_SESSION" =~ Cinnamon ]]; then
 				SETTER=set_cinnamon
-			elif [[ "$DESKTOP_SESSION" =~ ^(/usr/share/xsessions/plasma|NEON|Neon|neon|PLASMA|Plasma|plasma|KDE|Kde|kde)$ ]]; then
+			elif [[ "$DESKTOP_SESSION" =~ Neon|Plasma|KDE ]]; then
 				SETTER=set_kde
-			elif [[ "$DESKTOP_SESSION" =~ ^(PANTHEON|Pantheon|pantheon|GNOME|Gnome|gnome|Gnome-xorg|gnome-xorg|UBUNTU|Ubuntu|ubuntu|DEEPIN|Deepin|deepin|POP|Pop|pop)$ ]]; then
+			elif [[ "$DESKTOP_SESSION" =~ GNOME|Ubuntu|Pop|Deepin ]]; then
 				SETTER=set_gnome
-			elif [[ "$DESKTOP_SESSION" == "sway" ]]; then
+			elif [[ "$DESKTOP_SESSION" =~ Pantheon ]]; then
+				SETTER=set_pantheon
+			elif [[ "$DESKTOP_SESSION" =~ sway ]]; then
 				SETTER="swaybg -i"
 			else
-				echo "${CYAN}INFO${WHITE}: Reverting to feh. This might not work depending on your setup."
+				echo "${CYAN}INFO${WHITE}: Resorting to feh. This might not work depending on your setup."
 				SETTER="feh --bg-fill"
 			fi
 			;;
@@ -273,8 +311,11 @@ main() {
 
 WALSCHEME='dark'
 ## Get Options
-while getopts ":hplas:b:o:" opt; do
+while getopts ":hdplas:b:o:" opt; do
 	case ${opt} in
+		d)
+			DEBUG=true
+			;;
 		p)
 			PYWAL=true
 			;;
