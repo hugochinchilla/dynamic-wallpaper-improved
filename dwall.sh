@@ -154,6 +154,11 @@ set_pantheon() {
 	fi
 }
 
+## Set wallpaper in sway
+set_sway() {
+    swaymsg -p -t get_outputs | grep Output | awk {'print $2'} | xargs -I {} ogurictl output {} --image $1
+}
+
 ## For XFCE only
 if [[ "$OSTYPE" == "linux"* ]]; then
 	SCREEN="$(xrandr --listactivemonitors | awk -F ' ' 'END {print $1}' | tr -d \:)"
@@ -164,7 +169,7 @@ fi
 case "$OSTYPE" in
 	linux*)
 			if [ -n "$SWAYSOCK" ]; then
-				SETTER="eval ogurictl output '*' --image"
+				SETTER=set_sway
 			elif [[ "$DESKTOP_SESSION" =~ mate ]]; then
 				SETTER="gsettings set org.mate.background picture-filename"
 			elif [[ "$DESKTOP_SESSION" =~ XFCE|Xubuntu ]]; then
