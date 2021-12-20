@@ -80,6 +80,7 @@ usage() {
 		    -l                           Force light color scheme 
 		    -a                           Automatically set light/dark color scheme based on GNOME theme or daytime 
 		  -o                             Output wallpaper to file instead of setting it
+		  -k							 Keep running in a loop, use with exec in sway or i3
 		  -d                             Turn on debug messages
 	EOF
 
@@ -306,17 +307,34 @@ main() {
 	# set wallpaper accordingly
 	if [[ -n "$PYWAL" ]]; then
 		_walbackend=${WALBACKEND:-wal}
-		{ pywal_set "$num" "$_walbackend"; reset_color; exit 0; }
+		{ pywal_set "$num" "$_walbackend"; reset_color; loop; }
 	elif [[ -n "$OUTPUT" ]]; then
-		{ file_set "$num"; reset_color; exit 0; }
+		{ file_set "$num"; reset_color; loop; }
 	else
-		{ set_wallpaper "$num"; reset_color; exit 0; }
+		{ set_wallpaper "$num"; reset_color; loop; }
 	fi
+}
+
+loop() {
+	SLEEP_TIME=300
+	if [[ ! $LOOP ]]; then
+		exit 0
+	fi
+
+	if $DEBUG; then
+		echo "${CYAN}DEBUG${WHITE}: waiting ${SLEEP_TIME} seconds"
+	fi
+	sleep $SLEEP_TIME
+
+	if $DEBUG; then
+		echo "${CYAN}DEBUG${WHITE}: reaplying wallpaper"
+	fi
+	main
 }
 
 WALSCHEME='dark'
 ## Get Options
-while getopts ":hdplas:b:o:" opt; do
+while getopts ":hdpklas:b:o:" opt; do
 	case ${opt} in
 		d)
 			DEBUG=true
@@ -338,6 +356,9 @@ while getopts ":hdplas:b:o:" opt; do
 			;;
 		a)
 			WALSCHEME='auto'
+			;;
+		k)
+			LOOP=true
 			;;
 		h)
 			{ usage; reset_color; exit 0; }
