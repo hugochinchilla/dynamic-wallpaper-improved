@@ -16,7 +16,6 @@ MAGENTABG="$(printf '\033[45m')"  CYANBG="$(printf '\033[46m')"  WHITEBG="$(prin
 
 ## Wallpaper directory
 DIR="/usr/share/dynamic-wallpaper/images"
-HOUR=`date +%k`
 
 ## Wordsplit in ZSH
 set -o shwordsplit 2>/dev/null
@@ -303,6 +302,7 @@ check_style() {
 ## Main
 main() {
 	# get current hour
+	HOUR=`date +%k`
 	num=$(($HOUR/1))
 	# set wallpaper accordingly
 	if [[ -n "$PYWAL" ]]; then
