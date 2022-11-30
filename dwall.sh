@@ -29,18 +29,18 @@ DEBUG=false
 reset_color() {
 	tput sgr0   # reset attributes
 	tput op     # reset color
-    return
+	return
 }
 
 ## Script Termination
 exit_on_signal_SIGINT() {
-    { printf "${RED}\n\n%s\n\n" "[!] Program Interrupted." 2>&1; reset_color; }
-    exit 0
+	{ printf "${RED}\n\n%s\n\n" "[!] Program Interrupted." 2>&1; reset_color; }
+	exit 0
 }
 
 exit_on_signal_SIGTERM() {
-    { printf "${RED}\n\n%s\n\n" "[!] Program Terminated." 2>&1; reset_color; }
-    exit 0
+	{ printf "${RED}\n\n%s\n\n" "[!] Program Terminated." 2>&1; reset_color; }
+	exit 0
 }
 
 trap exit_on_signal_SIGINT SIGINT
@@ -48,19 +48,19 @@ trap exit_on_signal_SIGTERM SIGTERM
 
 ## Prerequisite
 Prerequisite() { 
-    dependencies=(feh grep xargs)
-    for dependency in "${dependencies[@]}"; do
-        type -p "$dependency" &>/dev/null || {
-            echo -e ${RED}"[!] ERROR: Could not find ${GREEN}'${dependency}'${RED}, is it installed?" >&2
-            { reset_color; exit 1; }
-        }
-    done
+	dependencies=(feh grep xargs)
+	for dependency in "${dependencies[@]}"; do
+		type -p "$dependency" &>/dev/null || {
+			echo -e ${RED}"[!] ERROR: Could not find ${GREEN}'${dependency}'${RED}, is it installed?" >&2
+			{ reset_color; exit 1; }
+		}
+	done
 }
 
 ## Usage
 usage() {
 	clear
-    cat <<- EOF
+	cat <<- EOF
 		${RED}╺┳┓╻ ╻┏┓╻┏━┓┏┳┓╻┏━╸   ${GREEN}╻ ╻┏━┓╻  ╻  ┏━┓┏━┓┏━┓┏━╸┏━┓
 		${RED} ┃┃┗┳┛┃┗┫┣━┫┃┃┃┃┃     ${GREEN}┃╻┃┣━┫┃  ┃  ┣━┛┣━┫┣━┛┣╸ ┣┳┛
 		${RED}╺┻┛ ╹ ╹ ╹╹ ╹╹ ╹╹┗━╸   ${GREEN}┗┻┛╹ ╹┗━╸┗━╸╹  ╹ ╹╹  ┗━╸╹┗╸
@@ -79,7 +79,7 @@ usage() {
 		    -l                           Force light color scheme 
 		    -a                           Automatically set light/dark color scheme based on GNOME theme or daytime 
 		  -o                             Output wallpaper to file instead of setting it
-		  -k							 Keep running in a loop, use with exec in sway or i3
+		  -k                             Keep running in a loop, use with exec in sway or i3
 		  -d                             Turn on debug messages
 	EOF
 
@@ -88,7 +88,7 @@ usage() {
 	printf -- ${ORANGE}'%s  ' "${styles[@]}"
 	printf -- '\n\n'${WHITE}
 
-    cat <<- EOF
+	cat <<- EOF
 		Examples:
 		`basename $0` -s beach                   Set 'beach' style wallpaper
 		`basename $0` -s beach -o ~/.wallpaper   Save 'beach' style wallpaper into file '~/.wallpaper'
@@ -157,7 +157,7 @@ set_pantheon() {
 
 ## Set wallpaper in sway
 set_sway() {
-    swaymsg -p -t get_outputs | grep Output | awk {'print $2'} | xargs -I {} ogurictl output {} --image $1
+	swaymsg -p -t get_outputs | grep Output | awk {'print $2'} | xargs -I {} ogurictl output {} --image $1
 }
 
 ## For XFCE only
@@ -345,7 +345,7 @@ while getopts ":hdpklas:b:o:" opt; do
 			;;
 		o)
 			OUTPUT=$OPTARG
-      ;;
+			;;
 		b)
 			WALBACKEND=$OPTARG
 			;;
@@ -379,7 +379,7 @@ done
 Prerequisite
 if [[ "$STYLE" ]]; then
 	check_style "$STYLE"
-    main
+	main
 else
 	{ usage; reset_color; exit 1; }
 fi
