@@ -69,10 +69,11 @@ usage() {
 		A bash script to adapt your wallpaper to the time
 		By Aditya Shakya (@adi1090x) and GitGangGuy
 		
-		Usage                            `basename $0` [ -h ] [ -p [ -b backend ] [ -a | -l ] ] [ -s style ] [ -o output ]
+		Usage                            `basename $0` [ -h ] [ -p [ -b backend ] [ -a | -l ] ] [ -s style ] [-u] [ -o output ]
 
 		Options:
-		  -s                             Name of the style to apply (required)
+		  -s                             Name of the style to apply
+		  -u                             Update the wallpaper using the current style
 		  -h                             Show this help message 
 		  -p                             Use pywal to set wallpaper 
 		    -b                           Pass a backend to pywal 
@@ -92,6 +93,7 @@ usage() {
 		Examples:
 		`basename $0` -s beach                   Set 'beach' style wallpaper
 		`basename $0` -s beach -o ~/.wallpaper   Save 'beach' style wallpaper into file '~/.wallpaper'
+		`basename $0` -u                         Set wallpaper to the current style, and refresh the pywal theme
 		`basename $0` -p -s sahara               Set 'beach' style wallpaper, and refresh the pywal theme
 		`basename $0` -p -b colorz -s sahara     " with 'colorz' backend
 		`basename $0` -p -b colorz -s sahara -a    " with automatic light/dark mode
@@ -264,7 +266,7 @@ file_set() {
 
 ## Wallpaper Setter
 set_wallpaper() {
-	cfile="$HOME/.cache/dwall_current"
+	cache_file="$HOME/.cache/dwall_current"
 	get_img "$1"
 
 	# set wallpaper with setter
@@ -273,12 +275,28 @@ set_wallpaper() {
 	fi
 
 	# make/update dwall cache file
-	if [[ ! -f "$cfile" ]]; then
-		touch "$cfile"
-		echo "$image.$FORMAT" > "$cfile"
+	if [[ ! -f "$cache_file" ]]; then
+		touch "$cache_file"
+		echo "$image.$FORMAT" > "$cache_file"
 	else
-		echo "$image.$FORMAT" > "$cfile"	
+		echo "$image.$FORMAT" > "$cache_file"	
 	fi
+}
+
+get_style_from_cache() {
+	# get current wallpaper
+	cache_file="$HOME/.cache/dwall_current"
+	if [[ -f "$cache_file" ]]; then
+		curr_wall=$(cat "$cache_file")
+	else
+		echo -e ${RED}"[!] Cache file $cache_file does not exist, exiting..."
+		{ reset_color; exit 1; }
+	fi
+
+	# extract style from current wallpaper by removing $DIR suffix from path
+	# and getting the first directory name
+	# e.g. /usr/share/dynamic-wallpaper/images/beach/16.jpg -> beach
+	STYLE=$(echo ${curr_wall#$DIR/} | cut -d '/' -f 1)
 }
 
 ## Check valid style
@@ -335,7 +353,7 @@ loop() {
 
 WALSCHEME='dark'
 ## Get Options
-while getopts ":hdpklas:b:o:" opt; do
+while getopts ":hdpklas:b:o:u" opt; do
 	case ${opt} in
 		d)
 			DEBUG=true
@@ -345,6 +363,9 @@ while getopts ":hdpklas:b:o:" opt; do
 			;;
 		o)
 			OUTPUT=$OPTARG
+			;;
+		u)
+			UPDATE=true
 			;;
 		b)
 			WALBACKEND=$OPTARG
@@ -377,6 +398,9 @@ done
 
 ## Run
 Prerequisite
+if [[ -n "$UPDATE" && -z "$STYLE" ]]; then
+	get_style_from_cache
+fi
 if [[ "$STYLE" ]]; then
 	check_style "$STYLE"
 	main
