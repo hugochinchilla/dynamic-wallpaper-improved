@@ -369,7 +369,7 @@ while getopts ":hdpklas:b:o:" opt; do
 			{ reset_color; exit 1; }
 			;;
 		:)
-			echo -e ${RED}"[!] Invalid:$G -$OPTARG$R requires an argument."
+			echo -e ${RED}"[!] Invalid:${GREEN} -$OPTARG${RED} requires an argument."
 			{ reset_color; exit 1; }
 			;;
 	esac
