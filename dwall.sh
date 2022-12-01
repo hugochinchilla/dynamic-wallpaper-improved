@@ -93,7 +93,7 @@ usage() {
 		Examples:
 		`basename $0` -s beach                   Set 'beach' style wallpaper
 		`basename $0` -s beach -o ~/.wallpaper   Save 'beach' style wallpaper into file '~/.wallpaper'
-		`basename $0` -u                         Set wallpaper to the current style, and refresh the pywal theme
+		`basename $0` -u                         Updates the wallpaper using the current style
 		`basename $0` -p -s sahara               Set 'beach' style wallpaper, and refresh the pywal theme
 		`basename $0` -p -b colorz -s sahara     " with 'colorz' backend
 		`basename $0` -p -b colorz -s sahara -a    " with automatic light/dark mode
