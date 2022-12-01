@@ -29,18 +29,18 @@ DEBUG=false
 reset_color() {
 	tput sgr0   # reset attributes
 	tput op     # reset color
-    return
+	return
 }
 
 ## Script Termination
 exit_on_signal_SIGINT() {
-    { printf "${RED}\n\n%s\n\n" "[!] Program Interrupted." 2>&1; reset_color; }
-    exit 0
+	{ printf "${RED}\n\n%s\n\n" "[!] Program Interrupted." 2>&1; reset_color; }
+	exit 0
 }
 
 exit_on_signal_SIGTERM() {
-    { printf "${RED}\n\n%s\n\n" "[!] Program Terminated." 2>&1; reset_color; }
-    exit 0
+	{ printf "${RED}\n\n%s\n\n" "[!] Program Terminated." 2>&1; reset_color; }
+	exit 0
 }
 
 trap exit_on_signal_SIGINT SIGINT
@@ -48,19 +48,19 @@ trap exit_on_signal_SIGTERM SIGTERM
 
 ## Prerequisite
 Prerequisite() { 
-    dependencies=(feh grep xargs)
-    for dependency in "${dependencies[@]}"; do
-        type -p "$dependency" &>/dev/null || {
-            echo -e ${RED}"[!] ERROR: Could not find ${GREEN}'${dependency}'${RED}, is it installed?" >&2
-            { reset_color; exit 1; }
-        }
-    done
+	dependencies=(feh grep xargs)
+	for dependency in "${dependencies[@]}"; do
+		type -p "$dependency" &>/dev/null || {
+			echo -e ${RED}"[!] ERROR: Could not find ${GREEN}'${dependency}'${RED}, is it installed?" >&2
+			{ reset_color; exit 1; }
+		}
+	done
 }
 
 ## Usage
 usage() {
 	clear
-    cat <<- EOF
+	cat <<- EOF
 		${RED}╺┳┓╻ ╻┏┓╻┏━┓┏┳┓╻┏━╸   ${GREEN}╻ ╻┏━┓╻  ╻  ┏━┓┏━┓┏━┓┏━╸┏━┓
 		${RED} ┃┃┗┳┛┃┗┫┣━┫┃┃┃┃┃     ${GREEN}┃╻┃┣━┫┃  ┃  ┣━┛┣━┫┣━┛┣╸ ┣┳┛
 		${RED}╺┻┛ ╹ ╹ ╹╹ ╹╹ ╹╹┗━╸   ${GREEN}┗┻┛╹ ╹┗━╸┗━╸╹  ╹ ╹╹  ┗━╸╹┗╸
@@ -69,17 +69,18 @@ usage() {
 		A bash script to adapt your wallpaper to the time
 		By Aditya Shakya (@adi1090x) and GitGangGuy
 		
-		Usage                            `basename $0` [ -h ] [ -p [ -b backend ] [ -a | -l ] ] [ -s style ] [ -o output ]
+		Usage                            `basename $0` [ -h ] [ -p [ -b backend ] [ -a | -l ] ] [ -s style ] [-u] [ -o output ]
 
 		Options:
-		  -s                             Name of the style to apply (required)
+		  -s                             Name of the style to apply
+		  -u                             Update the wallpaper using the current style
 		  -h                             Show this help message 
 		  -p                             Use pywal to set wallpaper 
 		    -b                           Pass a backend to pywal 
 		    -l                           Force light color scheme 
 		    -a                           Automatically set light/dark color scheme based on GNOME theme or daytime 
 		  -o                             Output wallpaper to file instead of setting it
-		  -k							 Keep running in a loop, use with exec in sway or i3
+		  -k                             Keep running in a loop, use with exec in sway or i3
 		  -d                             Turn on debug messages
 	EOF
 
@@ -88,10 +89,11 @@ usage() {
 	printf -- ${ORANGE}'%s  ' "${styles[@]}"
 	printf -- '\n\n'${WHITE}
 
-    cat <<- EOF
+	cat <<- EOF
 		Examples:
 		`basename $0` -s beach                   Set 'beach' style wallpaper
 		`basename $0` -s beach -o ~/.wallpaper   Save 'beach' style wallpaper into file '~/.wallpaper'
+		`basename $0` -u                         Updates the wallpaper using the current style
 		`basename $0` -p -s sahara               Set 'beach' style wallpaper, and refresh the pywal theme
 		`basename $0` -p -b colorz -s sahara     " with 'colorz' backend
 		`basename $0` -p -b colorz -s sahara -a    " with automatic light/dark mode
@@ -122,6 +124,7 @@ set_cinnamon() {
 ## Set wallpaper in GNOME
 set_gnome() {
 	gsettings set org.gnome.desktop.background picture-uri "file://$1"
+	gsettings set org.gnome.desktop.background picture-uri-dark "file://$1"
 	gsettings set org.gnome.desktop.screensaver picture-uri "file://$1"
 }
 
@@ -156,7 +159,7 @@ set_pantheon() {
 
 ## Set wallpaper in sway
 set_sway() {
-    swaymsg -p -t get_outputs | grep Output | awk {'print $2'} | xargs -I {} ogurictl output {} --image $1
+	swaymsg -p -t get_outputs | grep Output | awk {'print $2'} | xargs -I {} ogurictl output {} --image $1
 }
 
 ## For XFCE only
@@ -263,7 +266,7 @@ file_set() {
 
 ## Wallpaper Setter
 set_wallpaper() {
-	cfile="$HOME/.cache/dwall_current"
+	cache_file="$HOME/.cache/dwall_current"
 	get_img "$1"
 
 	# set wallpaper with setter
@@ -272,12 +275,28 @@ set_wallpaper() {
 	fi
 
 	# make/update dwall cache file
-	if [[ ! -f "$cfile" ]]; then
-		touch "$cfile"
-		echo "$image.$FORMAT" > "$cfile"
+	if [[ ! -f "$cache_file" ]]; then
+		touch "$cache_file"
+		echo "$image.$FORMAT" > "$cache_file"
 	else
-		echo "$image.$FORMAT" > "$cfile"	
+		echo "$image.$FORMAT" > "$cache_file"	
 	fi
+}
+
+get_style_from_cache() {
+	# get current wallpaper
+	cache_file="$HOME/.cache/dwall_current"
+	if [[ -f "$cache_file" ]]; then
+		curr_wall=$(cat "$cache_file")
+	else
+		echo -e ${RED}"[!] Cache file $cache_file does not exist, exiting..."
+		{ reset_color; exit 1; }
+	fi
+
+	# extract style from current wallpaper by removing $DIR suffix from path
+	# and getting the first directory name
+	# e.g. /usr/share/dynamic-wallpaper/images/beach/16.jpg -> beach
+	STYLE=$(echo ${curr_wall#$DIR/} | cut -d '/' -f 1)
 }
 
 ## Check valid style
@@ -334,7 +353,7 @@ loop() {
 
 WALSCHEME='dark'
 ## Get Options
-while getopts ":hdpklas:b:o:" opt; do
+while getopts ":hdpklas:b:o:u" opt; do
 	case ${opt} in
 		d)
 			DEBUG=true
@@ -344,7 +363,10 @@ while getopts ":hdpklas:b:o:" opt; do
 			;;
 		o)
 			OUTPUT=$OPTARG
-      ;;
+			;;
+		u)
+			UPDATE=true
+			;;
 		b)
 			WALBACKEND=$OPTARG
 			;;
@@ -368,7 +390,7 @@ while getopts ":hdpklas:b:o:" opt; do
 			{ reset_color; exit 1; }
 			;;
 		:)
-			echo -e ${RED}"[!] Invalid:$G -$OPTARG$R requires an argument."
+			echo -e ${RED}"[!] Invalid:${GREEN} -$OPTARG${RED} requires an argument."
 			{ reset_color; exit 1; }
 			;;
 	esac
@@ -376,9 +398,12 @@ done
 
 ## Run
 Prerequisite
+if [[ -n "$UPDATE" && -z "$STYLE" ]]; then
+	get_style_from_cache
+fi
 if [[ "$STYLE" ]]; then
 	check_style "$STYLE"
-    main
+	main
 else
 	{ usage; reset_color; exit 1; }
 fi
